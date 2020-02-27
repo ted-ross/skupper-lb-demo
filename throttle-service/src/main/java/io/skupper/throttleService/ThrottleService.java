@@ -1,4 +1,4 @@
-package io.skupper;
+package io.skupper.throttleService;
 
 import javax.inject.Inject;
 import javax.ws.rs.GET;
