@@ -9,7 +9,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
 import io.vertx.axle.ext.web.client.WebClient;
-import io.vertx.core.json.JsonObject;
 import io.vertx.axle.core.Vertx;
 import io.vertx.ext.web.client.WebClientOptions;
 
@@ -18,6 +17,8 @@ public class LoadGen {
 
     int concurrency = 0;
     int inFlight    = 0;
+    int total       = 0;
+    String lastStatus = "<none>";
 
     @Inject
     Vertx vertx;
@@ -28,21 +29,21 @@ public class LoadGen {
     void initialize() {
         client = WebClient.create(vertx,
             new WebClientOptions()
-                .setDefaultHost("localhost")
+                .setDefaultHost("greeting")
                 .setDefaultPort(8080));
     }
 
     private void sendRequest() {
         inFlight++;
+        total++;
         client.get("/hello")
             .send()
-            .thenApply(resp -> {
+            .thenAccept(resp -> {
+                lastStatus = resp.statusMessage();
                 inFlight--;
                 if (inFlight < concurrency) {
                     sendRequest();
                 }
-
-                return new JsonObject();
             });
     }
 
@@ -63,7 +64,8 @@ public class LoadGen {
             sendRequest();
         }
 
-        return String.format("Load set to %d (in-flight: %d)", concurrency, inFlight);
+        return String.format("Load set to %d (in-flight: %d, total: %d, last_status: %s)",
+            concurrency, inFlight, total, lastStatus);
     }
 }
 
