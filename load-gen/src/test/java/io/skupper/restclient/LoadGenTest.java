@@ -12,10 +12,10 @@ public class LoadGenTest {
     @Test
     public void testHelloEndpoint() {
         given()
-          .when().get("/hello")
+          .when().get("/set_load/0")
           .then()
              .statusCode(200)
-             .body(is("hello"));
+             .body(is("Load set to 0 (in-flight: 0, total: 0, failures: 0, last_status: <none>)"));
     }
 
 }

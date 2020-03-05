@@ -18,6 +18,7 @@ public class LoadGen {
     int concurrency = 0;
     int inFlight    = 0;
     int total       = 0;
+    int failures    = 0;
     String lastStatus = "<none>";
 
     @Inject
@@ -38,13 +39,17 @@ public class LoadGen {
         total++;
         client.get("/hello")
             .send()
-            .thenAccept(resp -> {
-                lastStatus = resp.statusMessage();
+            .whenComplete((resp, exception) -> {
                 inFlight--;
-                if (inFlight < concurrency) {
-                    sendRequest();
+                if (exception == null) {
+                    lastStatus = resp.statusMessage();
+                } else {
+                    failures++;
                 }
-            });
+            if (inFlight < concurrency) {
+                sendRequest();
+            }
+        });
     }
 
     @GET
@@ -64,8 +69,8 @@ public class LoadGen {
             sendRequest();
         }
 
-        return String.format("Load set to %d (in-flight: %d, total: %d, last_status: %s)",
-            concurrency, inFlight, total, lastStatus);
+        return String.format("Load set to %d (in-flight: %d, total: %d, failures: %d, last_status: %s)",
+            concurrency, inFlight, total, failures, lastStatus);
     }
 }
 
